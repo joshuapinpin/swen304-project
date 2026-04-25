@@ -1,0 +1,62 @@
+/**
+ * Question 6.1
+ * Journalists from the Chicago Herald suggest that Chicago is the hotspot of bank
+ * robberies in the Chicago district. Therefore, they ask the police whether they think that
+ * Chicago is more profitable for bank robbers than other cities in the district.
+ * 
+ * To support the police, you are asked to write a query that finds the average share of all
+ * robberies in Chicago, and also the average share of all robberies in the other city (i.e.,
+ * not Chicago) with the largest average share. Note that the average share of a bank
+ * robbery can be determined based on the number of participating robbers.
+ */
+
+ -- Cleanup before using
+ DROP VIEW IF EXISTS AvgSharePerCity CASCADE;
+ DROP VIEW IF EXISTS ChicagoAvg CASCADE;
+ DROP VIEW IF EXISTS BestOtherCity CASCADE;
+
+-- 1: Stepwise Approach
+-- Get average share per city
+CREATE VIEW AvgSharePerCity AS
+SELECT City, AVG(Share) AS AvgShare
+FROM Accomplices
+GROUP BY City;
+
+-- Extract Chicago's average share
+CREATE VIEW ChicagoAvg AS
+SELECT AvgShare AS ChicagoAvgShare
+FROM AvgSharePerCity
+WHERE City = 'Chicago';
+
+-- Get the city that's not Chicago with the largest average share
+CREATE VIEW BestOtherCity AS
+SELECT City, AvgShare
+FROM AvgSharePerCity
+WHERE City <> 'Chicago'
+ORDER BY AvgShare DESC
+LIMIT 1;
+
+-- Produce side-by-side result
+SELECT 
+    ROUND(c.ChicagoAvgShare, 2) AS ChicagoAvgShare,
+    b.City AS BestOtherCity,
+    ROUND(b.AvgShare, 2) AS BestOtherCityAvgShare
+FROM ChicagoAvg c, BestOtherCity b;
+
+
+-- 2: Nested Query
+SELECT
+    ROUND((SELECT AVG(Share) FROM Accomplices WHERE City = 'Chicago'), 2) AS ChicagoAvgShare,
+    (SELECT City FROM Accomplices
+        WHERE City <> 'Chicago'
+        GROUP BY City
+        ORDER BY AVG(Share) DESC
+        LIMIT 1) AS BestOtherCity,
+    ROUND((SELECT AVG(Share) FROM Accomplices
+        WHERE City = (
+            SELECT City FROM Accomplices
+            WHERE City <> 'Chicago'
+            GROUP BY City
+            ORDER BY AVG(Share) DESC
+            LIMIT 1
+        )), 2) AS BestOtherCityAvgShare;
