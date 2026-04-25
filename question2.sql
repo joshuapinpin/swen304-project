@@ -1,6 +1,6 @@
-/*
-Question 2
-Populating the DB with Data
+/**
+ * Question 2
+ * Populating the DB with Data
 */
 
 -- 1. Banks

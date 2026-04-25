@@ -1,4 +1,8 @@
-
+/**
+ * Question 1
+ * Defining the DB
+ */
+ 
 -- 1: ENTITIES
 
 CREATE TABLE Banks (
