@@ -22,9 +22,9 @@ SELECT City, AVG(Share) AS AvgShare
 FROM Accomplices
 GROUP BY City;
 
--- Extract Chicago's average share
+-- Get Chicago's average share
 CREATE VIEW ChicagoAvg AS
-SELECT AvgShare AS ChicagoAvgShare
+SELECT City, AvgShare
 FROM AvgSharePerCity
 WHERE City = 'Chicago';
 
@@ -36,27 +36,26 @@ WHERE City <> 'Chicago'
 ORDER BY AvgShare DESC
 LIMIT 1;
 
--- Produce side-by-side result
-SELECT 
-    ROUND(c.ChicagoAvgShare, 2) AS ChicagoAvgShare,
-    b.City AS BestOtherCity,
-    ROUND(b.AvgShare, 2) AS BestOtherCityAvgShare
-FROM ChicagoAvg c, BestOtherCity b;
+-- Produce result with City and AvgShare columns
+SELECT City, ROUND(AvgShare, 2) AS AvgShare FROM ChicagoAvg
+UNION ALL
+SELECT City, ROUND(AvgShare, 2) AS AvgShare FROM BestOtherCity;
 
 
 -- 2: Nested Query
-SELECT
-    ROUND((SELECT AVG(Share) FROM Accomplices WHERE City = 'Chicago'), 2) AS ChicagoAvgShare,
-    (SELECT City FROM Accomplices
-        WHERE City <> 'Chicago'
-        GROUP BY City
-        ORDER BY AVG(Share) DESC
-        LIMIT 1) AS BestOtherCity,
-    ROUND((SELECT AVG(Share) FROM Accomplices
-        WHERE City = (
-            SELECT City FROM Accomplices
-            WHERE City <> 'Chicago'
-            GROUP BY City
-            ORDER BY AVG(Share) DESC
-            LIMIT 1
-        )), 2) AS BestOtherCityAvgShare;
+SELECT City, ROUND(AVG(Share), 2) AS AvgShare
+FROM Accomplices
+WHERE City = 'Chicago'
+GROUP BY City
+
+UNION ALL
+
+SELECT City, ROUND(AvgShare, 2) AS AvgShare
+FROM (
+    SELECT City, AVG(Share) AS AvgShare
+    FROM Accomplices
+    WHERE City <> 'Chicago'
+    GROUP BY City
+    ORDER BY AvgShare DESC
+    LIMIT 1
+) AS BestOther;
